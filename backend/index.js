@@ -57,9 +57,7 @@ const Basket = mongoose.model("Basket", basketSchema);
 const orderSchema = new mongoose.Schema({
     _id: String,
     productId: String,
-    userId: String,
-    count: Number,
-    price: Number
+    userId: String,    
 })
 
 const Order = mongoose.model("Order", orderSchema);
@@ -218,6 +216,67 @@ app.post("/baskets/getAll", async(req, res)=>{
     }
 })
 //Sepetteki Ürünler
+
+//Sepetteki Ürünü Sil
+app.post("/baskets/remove", async(req,res)=>{
+    try {
+        const {_id} = req.body;
+        const basket = await Basket.findById(_id);
+        const product = await Product.findById(basket.productId);
+        product.stock += 1;
+        await Product.findByIdAndUpdate(product._id, product);
+        await Basket.findByIdAndRemove(_id);
+        res.json({message: "Silme işlemi başarılı"});
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+})
+//Sepetteki Ürünü Sil
+
+//Sipariş Oluşturma
+app.post("/orders/add", async (req, res)=>{
+    try {
+        const {userId} = req.body;
+        const baskets = await Basket.find({userId: userId});
+        for(const basket of baskets){
+            let order = new Order({
+                _id: uuidv4(),
+                productId: basket.productId,
+                userId: userId,
+            });
+            order.save();
+            await Basket.findByIdAndRemove(basket._id);
+        }        
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+})
+//Sipariş Oluşturma
+
+//Sipariş Listesi
+app.post("/orders", async(req, res)=>{
+    try {
+        const {userId} = req.body;
+        const orders = await Order.aggregate([
+            {
+                $match: {userId: userId}
+            },
+            {
+                $lookup:{
+                    from: "products",
+                    localField: "productId",
+                    foreignField: "_id",
+                    as: "products"
+                }
+            }
+        ]);
+
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+})
+//Sipariş Listesi
 
 const port = 5000;
 app.listen(5000, ()=>{

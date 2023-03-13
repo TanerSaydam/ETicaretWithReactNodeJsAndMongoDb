@@ -3,7 +3,7 @@ import axios from 'axios';
 
 function BasketComponent(){
     const [baskets, setBaskets] = useState([]);
-    const [total, setTotal] = useState(0);
+    const [total, setTotal] = useState(null);
 
     const getAll = async() =>{
         let user = JSON.parse(localStorage.getItem("user"));
@@ -11,16 +11,31 @@ function BasketComponent(){
         let response = await axios.post("http://localhost:5000/baskets/getAll",model);
         setBaskets(response.data); 
         let totalC = 0;
-        for (let i = 0; i < baskets.length; i++) {
+        for (let i = 0; i < baskets.length; i++) {            
             totalC += baskets[i].products[0].price
         }
-        setTotal(totalC);        
+        setTotal(totalC);       
     }
 
+    const remove = async(_id) => {
+        let confirm = window.confirm("Sepetteki ürünü silmek istiyor musunuz?")
+        if(confirm){
+        let model = {_id: _id};
+        await axios.post("http://localhost:5000/baskets/remove",model);
+        getAll();       
+        }
+    }
+
+    const addOrder = async () => {
+        let user = JSON.parse(localStorage.getItem("user"));
+        let model = {userId: user._id};
+        await axios.post("http://localhost:5000/orders/add", model);
+        getAll();
+    }
    
     useEffect(()=>{
-        getAll();       
-    },[])
+        getAll();
+    })
 
     return(
         <>
@@ -54,7 +69,7 @@ function BasketComponent(){
                                             <td>1</td>
                                             <td>{basket.products[0].price}</td>
                                             <td>
-                                                <button className='btn btn-outline-danger btn-sm'>Sil</button>
+                                                <button onClick={()=> remove(basket._id)} className='btn btn-outline-danger btn-sm'>Sil</button>
                                             </td>
                                         </tr>
                                     ))}
@@ -70,7 +85,7 @@ function BasketComponent(){
                                         <h5 className='text-center'>Toplam Ürün Sayısı: {baskets.length}</h5>
                                         <h5 className='alert alert-danger text-center'>Toplam Tutar: {total}</h5>
                                     <hr/>
-                                    <button className='btn btn-outline-danger w-100'>Ödeme Yap</button>
+                                    <button type='button' onClick={addOrder} className='btn btn-outline-danger w-100'>Ödeme Yap</button>
                                 </div>
                             </div>
                         </div>
