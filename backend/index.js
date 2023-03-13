@@ -194,6 +194,31 @@ app.post("/baskets/add", async (req,res)=>{
 })
 //Sepete Ürün Ekleme İşlemi
 
+//Sepetteki Ürünler
+app.post("/baskets/getAll", async(req, res)=>{
+    try {
+        const {userId} = req.body;
+        const baskets = await Basket.aggregate([
+            {
+                $match: {userId: userId}
+            },
+            {
+                $lookup:{
+                    from: "products",
+                    localField: "productId",
+                    foreignField: "_id",
+                    as: "products"
+                  }
+            }
+        ]);
+
+        res.json(baskets);
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+})
+//Sepetteki Ürünler
+
 const port = 5000;
 app.listen(5000, ()=>{
     console.log("Uygulama http://localhost:" + port + " üzerinden ayakata!");

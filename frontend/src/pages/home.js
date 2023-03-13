@@ -29,7 +29,7 @@ function HomeComponent(){
             <div className='row'>
                 {
                     products.map((product, index) => (
-                        <div key={index} className='col-md-3'>
+                        <div key={index} className='col-md-3 mt-2'>
                             <div className='card'>
                                 <div className='card-header'>
                                     <h4>{product.name}</h4>
