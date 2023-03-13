@@ -3,6 +3,7 @@ import {Outlet, Link, useNavigate } from "react-router-dom";
 
 function LayoutComponent() {
     const navigate = useNavigate();
+    let isAdmin = false;
 
     const logout = () => {
         navigate("/login");
@@ -12,7 +13,14 @@ function LayoutComponent() {
         if(!localStorage.getItem("token")){
             navigate("/login");
         }
-    })
+    });
+
+    const checkIsAdmin = () =>{
+        let user = JSON.parse(localStorage.getItem("user"));
+        isAdmin = user.isAdmin;
+    }
+
+    checkIsAdmin();
 
     return (
         <>
@@ -26,10 +34,13 @@ function LayoutComponent() {
                         <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                             <li className="nav-item">
                                 <Link to="/">Ana Sayfa</Link>
-                            </li>  
+                            </li> 
+                            {
+                            isAdmin &&
                             <li className="nav-item mx-2">
                                 <Link to="/products">Ürünler</Link>
                             </li>                     
+                            } 
                             <li className="nav-item mx-2">
                                 <Link to="/orders">Siparişlerim</Link>
                             </li> 

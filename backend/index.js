@@ -5,9 +5,11 @@ const {v4:uuidv4} = require("uuid");
 const multer = require("multer");
 const cors = require("cors");
 const jwt = require("jsonwebtoken")
+const path = require("path");
 
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const uri = "mongodb+srv://MongoDb:1@reacteticaretdb.ozezrmx.mongodb.net/?retryWrites=true&w=majority"
 mongoose.connect(uri).then(res=>{
@@ -21,7 +23,8 @@ const userSchema = new mongoose.Schema({
     _id: String,
     name: String,
     email: String,
-    password: String
+    password: String,
+    isAdmin: Boolean
 });
 
 const User = mongoose.model("User", userSchema);
@@ -44,9 +47,7 @@ const Product = mongoose.model("Product", productSchema);
 const basketSchema = new mongoose.Schema({
     _id: String,
     productId: String,
-    userId: String,
-    count: Number,
-    price: Number
+    userId: String,    
 });
 
 const Basket = mongoose.model("Basket", basketSchema);
@@ -80,7 +81,8 @@ app.post("/auth/register", async (req, res)=>{
             _id: uuidv4(),
             name: name,
             email: email,
-            password: password
+            password: password,
+            isAdmin: false
         });
 
         await user.save();
@@ -169,6 +171,28 @@ app.post("/products/remove", async (req, res)=>{
     }
 })
 //Remove Product İşlemi
+
+//Sepete Ürün Ekleme İşlemi
+app.post("/baskets/add", async (req,res)=>{
+    try {
+        const {productId, userId} = req.body;
+        let basket = new Basket({
+            _id: uuidv4(),
+            userId: userId,
+            productId: productId
+        });
+        await basket.save();
+
+        let product = await Product.findById(productId);
+        product.stock = product.stock - 1;
+        await Product.findByIdAndUpdate(productId, product);
+
+        res.json({message: "Ürün sepete başarıyla eklendi"});
+    } catch (error) {
+        res.status(500).json({message: error.message});
+    }
+})
+//Sepete Ürün Ekleme İşlemi
 
 const port = 5000;
 app.listen(5000, ()=>{
